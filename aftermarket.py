@@ -7,19 +7,29 @@ tickers = ["AAPL","MSFT","AMZN","GOOGL","NVDA","TSLA","META","AMD","MU"]
 data = []
 
 for t in tickers:
-    stock = yf.Ticker(t)
-    
-    regular = stock.fast_info.get("lastPrice", None)
-    post = stock.info.get("postMarketPrice", None)
+    try:
+        stock = yf.Ticker(t)
 
-    data.append({
-        "Ticker": t,
-        "Regular Price": regular,
-        "After Market Price": post
-    })
+        hist = stock.history(period="1d")
+        regular = hist["Close"].iloc[-1] if not hist.empty else None
+
+        info = stock.info
+        post = info.get("postMarketPrice", None)
+
+        data.append({
+            "Ticker": t,
+            "Regular Price": regular,
+            "After Market Price": post
+        })
+
+    except Exception as e:
+        data.append({
+            "Ticker": t,
+            "Regular Price": None,
+            "After Market Price": None
+        })
 
 df = pd.DataFrame(data)
 
 st.title("US Stocks After Market Prices")
-
 st.dataframe(df)

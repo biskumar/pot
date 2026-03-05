@@ -2,25 +2,34 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-tickers = ["AAPL","MSFT","AMZN","GOOGL","NVDA","TSLA","META","AMD","MU"]
+tickers = [AMZN"]
 
-@st.cache_data(ttl=300)
-def load_prices():
-    return yf.download(tickers, period="1d")
-
-data = load_prices()
-
-rows = []
+data = []
 
 for t in tickers:
     try:
-        price = data["Close"][t].iloc[-1]
-    except:
-        price = None
+        stock = yf.Ticker(t)
 
-    rows.append({"Ticker": t, "Price": price})
+        hist = stock.history(period="1d")
+        regular = hist["Close"].iloc[-1] if not hist.empty else None
 
-df = pd.DataFrame(rows)
+        info = stock.info
+        post = info.get("postMarketPrice", None)
 
-st.title("US Market Prices")
+        data.append({
+            "Ticker": t,
+            "Regular Price": regular,
+            "After Market Price": post
+        })
+
+    except Exception as e:
+        data.append({
+            "Ticker": t,
+            "Regular Price": None,
+            "After Market Price": None
+        })
+
+df = pd.DataFrame(data)
+
+st.title("US Stocks After Market Prices")
 st.dataframe(df)

@@ -4,32 +4,23 @@ import pandas as pd
 
 tickers = ["AAPL","MSFT","AMZN","GOOGL","NVDA","TSLA","META","AMD","MU"]
 
-data = []
+@st.cache_data(ttl=300)
+def load_prices():
+    return yf.download(tickers, period="1d")
+
+data = load_prices()
+
+rows = []
 
 for t in tickers:
     try:
-        stock = yf.Ticker(t)
+        price = data["Close"][t].iloc[-1]
+    except:
+        price = None
 
-        hist = stock.history(period="1d")
-        regular = hist["Close"].iloc[-1] if not hist.empty else None
+    rows.append({"Ticker": t, "Price": price})
 
-        info = stock.info
-        post = info.get("postMarketPrice", None)
+df = pd.DataFrame(rows)
 
-        data.append({
-            "Ticker": t,
-            "Regular Price": regular,
-            "After Market Price": post
-        })
-
-    except Exception as e:
-        data.append({
-            "Ticker": t,
-            "Regular Price": None,
-            "After Market Price": None
-        })
-
-df = pd.DataFrame(data)
-
-st.title("US Stocks After Market Prices")
+st.title("US Market Prices")
 st.dataframe(df)
